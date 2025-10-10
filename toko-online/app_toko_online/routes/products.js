@@ -1,6 +1,6 @@
 var express = require('express');
 var router = express.Router();
-var products = require('../data/product');
+var products = require('../models/products');
 
 router.get('/:id', function(req, res, next) {
   const productId = parseInt(req.params.id); //ambil tangkap id dari parameter URL
