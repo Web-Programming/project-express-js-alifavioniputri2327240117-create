@@ -1,6 +1,6 @@
 var express = require("express");
 var router = express.Router();
-var products = require("../data/prodicts.json");
+var products = require("../../../data/products.json");
 
 router.get("/:id", function(req,res, next){
     const productId = parselInt(req.params.id); //Tangkap 10 dari URL

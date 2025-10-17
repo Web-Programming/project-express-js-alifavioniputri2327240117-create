@@ -9,7 +9,7 @@ var mainController = require("../controllers/main");
 //    products: products
 //  });
 //});
-router.get("/", mainControllers.index);
+router.get("/", mainController.index);
 
 //selesaikan fungsi route pencarian, pisahkan dengan controller
 

@@ -1,148 +1,191 @@
-const {name} = require("ejs");
-var products = require("../../data/products.json");
-var Products = require("../models/products");
-
+var products = require('../../data/products.json');
+var Product = require("../models/products");
 const index = async (req, res) => {
-  try {
-    const prod = await Products.find({});
-    res.render("index", {
-      title: "Toko online sederhana",
-      products: prod,
-    });
-  } catch (err) {
-    res.status(500).send("gagal memuat produk");
-  }
-};
-
-const all = async (req, res) => {
-  try {
-    res.render("index", {
-      title: "Daftar Produk",
-      products: products,
-      query: "",
-    });
-  } catch (err) {
-    res.status(500).send("gagal memuat produk");
-  }
-};
+ 	try {
+        //gunakan find({})
+        //untuk mengambil seluruh data dari collection
+        const prod = await Product.find({}); 
+        res.render('index', {
+            title: 'Toko Online Sederhana - Ini Dari Mongo DB',
+            products: prod
+        });
+    }catch(err){
+        res.status(500).send("Gagal memuat produk");
+    }
+}; 
 
 const detail = async (req, res) => {
-  try {
-    const productId = parseInt(req.params.id);
-    const product = products.find((p) => p.id === productId);
+    try{
+        //const productId = parseInt(req.params.id); //Tangkap ID dari URL
+        //const product = products.find(p => p.id === productId); //Cari produk by id
+        
+        const productId = req.params.id;
+        const product = await Product.findById(productId);
 
-    if (!product) {
-      return res.status(404).send("Produk tidak tersedia");
+        if(!product){ //jika produk tidak ditemukan
+            return res.status(404).send('Produk tidak ditemukan!');
+        }
+        res.render('product-detail',
+            {
+                title : product.name,
+                product : product
+            }
+        );
+    }catch(err){
+        res.status(404).send("Gagal memuat detail produk");
     }
+}; 
 
-    res.render("product-detail", {
-      title: product.name,
-      product: product,
-    });
-  } catch (err) {
-    res.status(500).send("gagal memuat produk");
-  }
-};
-
-// Controller: Search Produk
-const search = async (req, res) => {
-  try {
-    const q = req.query.q ? req.query.q.toLowerCase() : "";
-    let filteredProducts = products;
-
-    if (q) {
-      filteredProducts = products.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          p.description.toLowerCase().includes(q)
-      );
-    }
-
-    console.log("Query:", q, "Jumlah hasil:", filteredProducts.length);
-
-    res.render("index", {
-      title: q ? `Hasil pencarian ${q}` : "Toko Online Sederhana",
-      products: filteredProducts,
-      query: q,
-    });
-  } catch (err) {
-    console.error("Error pada pencarian:", err);
-    res.status(500).send("Gagal memuat produk");
-  }
-};
-
-const reviewDetail = (req, res) => {
-  try {
-    const productId = req.params.productId;
-    const reviewId = req.params.reviewId;
-
-    res.render("review-detail", {
-      title: `Ulasan ${reviewId} untuk Produk ${productId}`,
-      productId,
-      reviewId,
-    });
-  } catch (err) {
-    console.error("Gagal memuat detail ulasan:", err);
-    res.status(500).send("Terjadi kesalahan saat memuat ulasan");
-  }
-};
-
+//CRUD controller
 //membuat rest api
-const apiall = async (req, res) => {
-  try {
-    const prod = await Product.find({});
-    res.status(200).json({
-      status: true,
-      message: "Data produk berhasil diambil",
-      data: prod,
-    });
-  } catch (err) {
-    res.status(500).json({
-      status: false,
-      message: "Gagal memuat produk",
-    });
-  }
-};
+const all = async (req, res) => {
+ 	try {
+        const prod = await Product.find({}); 
+        res.status(200).json(
+            {
+                status: true,
+                message: "Data produk berhasil diambil",
+                data: prod
+            });
+    }catch(err){
+        res.status(500).json({
+            status : false,
+            message: "Gagal memuat produk"
+        });
+    }
+}; 
 
+//create/insert Data
 const create = async (req, res) => {
-  try {
-    // 1. ambil dsata dari request body
-    const newProduct = new Product({
-      name: req.body.name,
-      price: req.body.price,
-      description: req.body.description,
-      stock: req.body.stock || 0,
-    });
-    // 2. simpan data ke  mongo db melalui model product
-    const product = await newProduct.save();
+    try{
+        //1. ambil data dari request body
+        const newProduct = new Product({
+            name: req.body.name,
+            price: req.body.price,
+            description: req.body.description,
+            stock: req.body.stock || 0
+        });
+        //2. simpan data ke mongodb melalui model Product
+        const product = await newProduct.save();
 
-    // 3. kirim respon sukses ke user.
-    res.status(200).json({
-      status: true,
-      message: "Produk berhasil disimpan",
-      data: product,
-    });
-  } catch (err) {
-    res.status(500).json({
-      status: false,
-      message: `Internal Server Error`,
-    });
-  }
+        //3. kirim respon suksek ke user
+        res.status(200).json({
+            status : true,
+            message: "Produk berhasil disimpan",
+            data: product
+        })
+    }catch(err){
+        if(err.name === 'ValidationError'){
+            res.status(400).json({
+                status: false,
+                message: err.message
+            });
+        }else{
+            res.status(500).json({
+                status: false,
+                message: 'Internal server error'
+            });
+        }
+        
+    }
 };
 
-const update = async (req, res) => {};
+//read one/detail product
+const detailproduk = async(req, res) => {
+    try {
+        //ambil id
+        const productId = req.params.id;
+        //cari berdasarkan id 
+        const product = await Product.findById(productId);
+        
+        //kirim respon error jika produk tdk ditemukan
+        if(!product) {
+            return res.status(404).json({
+                status: false,
+                message: "Produk tidak ditemukan"
+            });
+        }
+        //kirim respon sukses
+        res.status(200).json({
+            status:true,
+            message: "Detail produk berhasil diambil",
+            data:product
+        });
 
-const remove = async (req, res) => {};
-
-module.exports = {
-  index,
-  detail,
-  search,
-  reviewDetail,
-  all,
-  apiall,
-  create,
-  detail,
-  update,
-  remove,
+    }catch (err) {
+        res.status(500).json({
+            status: false,
+            message: "Gagal memuat detail produk"
+        });
+    }
 };
+
+//update data
+const update = async(req, res) => {
+    try{
+        const product = await Product.findByIdAndUpdate(req.params.id, req.body, { 
+            new: true,  //mengembalikan dokumen yg telah diupdate
+            runValidators: true //menjalankan validasi schema saat update
+        });
+
+        if(!product){
+            res.status(404).json({
+                status:false, message: "Produk tidak ditemukan",
+            });
+        }
+        //kirim respon sukses
+        res.status(200).json({
+            status:true, message: "Produk berhasil diupdate", data:product
+        });
+    }catch(err){
+        if(err.name === 'CastError'){
+            res.status(400).json({
+                status: false, message: "Format ID tidak valid"
+            });
+        }else if(err.name === 'ValidationError'){
+            res.status(400).json({
+                status: false, message: err.message
+            });
+        }else{
+            res.status(500).json({
+                status: false, message: 'Internal server error'
+            });
+        }
+    }
+};
+
+//delete/remove/destroy data
+const remove = async(req, res) => {
+    try{
+        //hapus menggunakan methdod findByIdAndDelete
+        const product = await Product.findByIdAndDelete(req.params.id);
+
+        if(!product){ //kirim respon gagal
+            res.status(404).json({
+                status:false, message: "Produk tidak ditemukan",
+            });
+        }else{
+            //kirim respon sukses
+            res.status(200).json({
+                status:true, message: "Produk berhasil dihapus"
+            });
+        }
+    }catch(err){
+        if(err.name === 'CastError'){
+            res.status(400).json({
+                status: false, message: "Format ID tidak valid"
+            });
+        }else{
+            res.status(500).json({
+                status: false, message: 'Internal server error'
+            });
+        }
+    }
+};
+
+module.exports = { 
+    index, detail, 
+    all, create, 
+    detailproduk, update,
+    remove
+}; 

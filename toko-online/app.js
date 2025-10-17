@@ -4,14 +4,14 @@ var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 // panggil file koneksi database
-require("./app_toko_online/models/db");
+require("./toko-online/app_toko_online/models/db");
 
 // perbaikan kedua
 var indexRouter = require("./app_toko_online/routes/index");
 var usersRouter = require("./app_toko_online/routes/users");
 var productRouter = require("./app_toko_online/routes/product"); //letakkan di atas agar rapi
 
-var apiProductRouter = require("./app_toko_online/routes/api/product");
+var apiProductRouter = require("./toko-online/app_toko_online/routes/api/product");
 var engine = require("ejs-blocks"); //menggunakan ejs block
 var app = express();
 
